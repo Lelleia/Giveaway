@@ -92,7 +92,6 @@
       height: 100%;
       transition: transform 4s cubic-bezier(0.33, 1, 0.68, 1);
     }
-
     .wheel {
       width: 100%;
       height: 100%;
@@ -202,6 +201,30 @@
   <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
 
   <script>
+    // Declare globally
+    let participants = new Set();
+    let currentRotation = 0;
+
+    // Spin function now globally accessible
+    function spin() {
+      if (participants.size === 0) {
+        alert("No participants yet!");
+        return;
+      }
+
+      const wheelSpinner = document.getElementById('wheel-spinner');
+      const spinDegrees = 360 * 5 + Math.floor(Math.random() * 360);
+
+      wheelSpinner.style.transition = 'none';
+      wheelSpinner.style.transform = `rotate(${currentRotation}deg)`;
+      wheelSpinner.offsetHeight; // force reflow
+
+      currentRotation += spinDegrees;
+
+      wheelSpinner.style.transition = 'transform 4s cubic-bezier(0.33, 1, 0.68, 1)';
+      wheelSpinner.style.transform = `rotate(${currentRotation}deg)`;
+    }
+
     let channelName = prompt("What is your Twitch channel name?");
     channelName = channelName ? channelName.trim().toLowerCase() : null;
 
@@ -215,8 +238,6 @@
       });
 
       client.connect();
-
-      const participants = new Set();
 
       client.on('message', (channel, tags, message, self) => {
         if (self) return;
@@ -232,8 +253,6 @@
               updateWheel();
             } else {
               console.log(`${name} is already in the giveaway!`);
-              // Uncomment below to alert duplicate attempts:
-              // alert(`${name} is already entered!`);
             }
           }
         }
@@ -285,19 +304,11 @@
         wheel.innerHTML = '';
         wheel.appendChild(canvas);
       }
-
-      let currentRotation = 0;
-      function spin() {
-        if (participants.size === 0) {
-          alert("No participants yet!");
-          return;
-        }
-        const spinDegrees = 360 * 5 + Math.floor(Math.random() * 360);
-        currentRotation += spinDegrees;
-        document.getElementById('wheel-spinner').style.transform = `rotate(${currentRotation}deg)`;
-      }
     }
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
