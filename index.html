@@ -221,10 +221,17 @@
         const trimmedMsg = message.trim();
         if (trimmedMsg.toLowerCase().startsWith('!giveaway ')) {
           const name = trimmedMsg.slice(10).trim();
-          if (name && !participants.has(name)) {
-            participants.add(name);
-            addParticipantToSidebar(name);
-            updateWheel();
+
+          if (name) {
+            if (!participants.has(name)) {
+              participants.add(name);
+              addParticipantToSidebar(name);
+              updateWheel();
+            } else {
+              console.log(`${name} is already in the giveaway!`);
+              // Uncomment below to alert duplicate attempts:
+              // alert(`${name} is already entered!`);
+            }
           }
         }
       });
