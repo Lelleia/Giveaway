@@ -107,7 +107,7 @@
       position: absolute;
       top: 50%;
       left: 52%;
-      transform: translate(-50%, -50%) rotate(90deg); /* Rotate pin to point right */
+      transform: translate(-50%, -50%) rotate(90deg);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -177,13 +177,11 @@
 
   <div class="main-layout">
     <div class="center-content">
-      <!-- Centered pin pointing to the right -->
       <div class="pin">
         <div class="head"></div>
         <div class="shaft"></div>
       </div>
 
-      <!-- Wheel wrapper -->
       <div id="wheel-wrapper">
         <div id="wheel-spinner">
           <div class="wheel" id="wheel"></div>
@@ -195,108 +193,104 @@
 
     <div class="right-panel">
       <div class="right-text">Participants</div>
-      <!-- Names will be appended here -->
     </div>
   </div>
 
-  <!-- Load tmi.js -->
   <script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
 
   <script>
-    // Connect to Twitch chat
-    const client = new tmi.Client({
-      channels: ['nuussen'] // Replace with your channel name in lowercase
-    });
+    let channelName = prompt("What is your Twitch channel name?");
+    channelName = channelName ? channelName.trim().toLowerCase() : null;
 
-    client.connect();
+    if (!channelName) {
+      alert("You must enter a valid Twitch channel name to use the giveaway.");
+    } else {
+      document.querySelector('.right-text').textContent = `Participants (from @${channelName})`;
 
-    // Keep track of participants (unique names)
-    const participants = new Set();
+      const client = new tmi.Client({
+        channels: [channelName]
+      });
 
-    client.on('message', (channel, tags, message, self) => {
-      if (self) return; // Ignore messages from the bot itself
+      client.connect();
 
-      const trimmedMsg = message.trim();
+      const participants = new Set();
 
-      // Look for !giveaway command with a name
-      if (trimmedMsg.toLowerCase().startsWith('!giveaway ')) {
-        const name = trimmedMsg.slice(10).trim();
-        if (name && !participants.has(name)) {
-          participants.add(name);
-          addParticipantToSidebar(name);
-          updateWheel();
+      client.on('message', (channel, tags, message, self) => {
+        if (self) return;
+
+        const trimmedMsg = message.trim();
+        if (trimmedMsg.toLowerCase().startsWith('!giveaway ')) {
+          const name = trimmedMsg.slice(10).trim();
+          if (name && !participants.has(name)) {
+            participants.add(name);
+            addParticipantToSidebar(name);
+            updateWheel();
+          }
         }
-      }
-    });
+      });
 
-    // Add participant name to the right panel
-    function addParticipantToSidebar(name) {
-      const div = document.createElement('div');
-      div.textContent = name;
-      div.style.marginTop = '10px';
-      div.style.color = '#f1f1f1';
-      document.querySelector('.right-panel').appendChild(div);
-    }
-
-    // Update the wheel to show participants as slices with labels
-    function updateWheel() {
-      const names = Array.from(participants);
-      const canvasSize = 300;
-      const canvas = document.createElement('canvas');
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
-      const ctx = canvas.getContext('2d');
-      const radius = canvasSize / 2;
-      const anglePerSlice = (2 * Math.PI) / names.length;
-
-      // Clear canvas before drawing
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      for (let i = 0; i < names.length; i++) {
-        const startAngle = i * anglePerSlice;
-        const endAngle = startAngle + anglePerSlice;
-
-        // Draw slice
-        ctx.beginPath();
-        ctx.moveTo(radius, radius);
-        ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
-        ctx.closePath();
-
-        // Use a nice color for each slice
-        ctx.fillStyle = `hsl(${(i * 360 / names.length)}, 70%, 60%)`;
-        ctx.fill();
-
-        // Draw text label
-        ctx.save();
-        ctx.translate(radius, radius);
-        ctx.rotate(startAngle + anglePerSlice / 2);
-
-        ctx.textAlign = "right";
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText(names[i], radius - 20, 5);
-
-        ctx.restore();
+      function addParticipantToSidebar(name) {
+        const div = document.createElement('div');
+        div.textContent = name;
+        div.style.marginTop = '10px';
+        div.style.color = '#f1f1f1';
+        document.querySelector('.right-panel').appendChild(div);
       }
 
-      // Replace existing wheel content with new canvas
-      const wheel = document.getElementById('wheel');
-      wheel.innerHTML = ''; // Clear old content
-      wheel.appendChild(canvas);
-    }
+      function updateWheel() {
+        const names = Array.from(participants);
+        const canvasSize = 300;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        const ctx = canvas.getContext('2d');
+        const radius = canvasSize / 2;
+        const anglePerSlice = (2 * Math.PI) / names.length;
 
-    // Spin function
-    let currentRotation = 0;
-    function spin() {
-      if (participants.size === 0) {
-        alert("No participants yet!");
-        return;
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+        for (let i = 0; i < names.length; i++) {
+          const startAngle = i * anglePerSlice;
+          const endAngle = startAngle + anglePerSlice;
+
+          ctx.beginPath();
+          ctx.moveTo(radius, radius);
+          ctx.arc(radius, radius, radius - 5, startAngle, endAngle);
+          ctx.closePath();
+
+          ctx.fillStyle = `hsl(${(i * 360 / names.length)}, 70%, 60%)`;
+          ctx.fill();
+
+          ctx.save();
+          ctx.translate(radius, radius);
+          ctx.rotate(startAngle + anglePerSlice / 2);
+          ctx.textAlign = "right";
+          ctx.fillStyle = "#000";
+          ctx.font = "bold 14px Arial";
+          ctx.fillText(names[i], radius - 20, 5);
+          ctx.restore();
+        }
+
+        const wheel = document.getElementById('wheel');
+        wheel.innerHTML = '';
+        wheel.appendChild(canvas);
       }
-      const spinDegrees = 360 * 5 + Math.floor(Math.random() * 360);
-      currentRotation += spinDegrees;
-      document.getElementById('wheel-spinner').style.transform = `rotate(${currentRotation}deg)`;
+
+      let currentRotation = 0;
+      function spin() {
+        if (participants.size === 0) {
+          alert("No participants yet!");
+          return;
+        }
+        const spinDegrees = 360 * 5 + Math.floor(Math.random() * 360);
+        currentRotation += spinDegrees;
+        document.getElementById('wheel-spinner').style.transform = `rotate(${currentRotation}deg)`;
+      }
     }
   </script>
+
+</body>
+</html>
 
 </body>
 </html>
